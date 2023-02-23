@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"image"
 	"image/draw"
 	"log"
@@ -88,7 +87,7 @@ func SetPage(dev *VirtualDev, page int) {
 	}
 
 	if len(dev.Config) <= page {
-		fmt.Printf("Requested page %d does not exists \n", page)
+		log.Printf("Requested page %d does not exists \n", page)
 		return
 	}
 

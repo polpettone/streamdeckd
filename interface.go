@@ -2,17 +2,18 @@ package main
 
 import (
 	"context"
-	"github.com/unix-streamdeck/api"
-	_ "github.com/unix-streamdeck/driver"
-	"github.com/unix-streamdeck/streamdeckd/handlers"
-	"golang.org/x/sync/semaphore"
+	"fmt"
 	"image"
 	"image/draw"
 	"log"
 	"os"
 	"strings"
-)
 
+	"github.com/unix-streamdeck/api"
+	_ "github.com/unix-streamdeck/driver"
+	"github.com/unix-streamdeck/streamdeckd/handlers"
+	"golang.org/x/sync/semaphore"
+)
 
 var sem = semaphore.NewWeighted(int64(1))
 
@@ -46,7 +47,7 @@ func SetImage(dev *VirtualDev, img image.Image, i int, page int) {
 				disconnect(dev)
 			} else if strings.Contains(err.Error(), "dimensions") {
 				log.Println(err)
-			}else {
+			} else {
 				log.Println(err)
 			}
 		}
@@ -85,6 +86,12 @@ func SetPage(dev *VirtualDev, page int) {
 	if page != dev.Page {
 		unmountPageHandlers(dev.Config[dev.Page])
 	}
+
+	if len(dev.Config) <= page {
+		fmt.Printf("Requested page %d does not exists \n", page)
+		return
+	}
+
 	dev.Page = page
 	currentPage := dev.Config[page]
 	for i := 0; i < len(currentPage); i++ {

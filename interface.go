@@ -82,13 +82,13 @@ func SetKeyImage(dev *VirtualDev, currentKey *api.Key, i int, page int) {
 }
 
 func SetPage(dev *VirtualDev, page int) {
-	if page != dev.Page {
-		unmountPageHandlers(dev.Config[dev.Page])
-	}
-
 	if len(dev.Config) <= page {
 		log.Printf("Requested page %d does not exists \n", page)
 		return
+	}
+
+	if page != dev.Page {
+		unmountPageHandlers(dev.Config[dev.Page])
 	}
 
 	dev.Page = page

@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/draw"
 	"log"
+	"os"
 
 	"github.com/unix-streamdeck/api"
 	"github.com/unix-streamdeck/streamdeckd/handlers"
@@ -32,11 +33,37 @@ func (c *IconStateHandler) Start(
 
 		text := k.IconHandlerFields["text_1"]
 
-		if !c.State {
-			text = k.IconHandlerFields["text_2"]
+		icon, ok := k.IconHandlerFields["icon_1"]
+		if !ok {
+			return
 		}
 
-		imgParsed, err := api.DrawText(img, text, k.TextSize, k.TextAlignment)
+		f, err := os.Open(icon)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		if !c.State {
+			text = k.IconHandlerFields["text_2"]
+
+			icon, ok := k.IconHandlerFields["icon_2"]
+			if !ok {
+				return
+			}
+
+			f, err = os.Open(icon)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+		}
+
+		i, _, err := image.Decode(f)
+
+		imgParsed, err := api.DrawText(i, text, k.TextSize, k.TextAlignment)
 
 		if err != nil {
 			log.Println(err)

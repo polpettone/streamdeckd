@@ -7,4 +7,5 @@ func RegisterBaseModules() {
 	handlers.RegisterModule(RegisterTime())
 	handlers.RegisterModule(RegisterCounter())
 	handlers.RegisterModule(RegisterSpotify())
+	handlers.RegisterModule(RegisterIconState())
 }

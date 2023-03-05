@@ -1,10 +1,13 @@
 package examples
 
 import (
+	"fmt"
 	"image"
 	"image/draw"
 	"log"
 	"os"
+	"os/exec"
+	"syscall"
 
 	"github.com/unix-streamdeck/api"
 	"github.com/unix-streamdeck/streamdeckd/handlers"
@@ -15,6 +18,7 @@ type IconStateHandler struct {
 	Running  bool
 	Callback func(image image.Image)
 	State    bool
+	Command  string
 }
 
 func (c *IconStateHandler) Start(
@@ -32,6 +36,7 @@ func (c *IconStateHandler) Start(
 		draw.Draw(img, img.Bounds(), image.Black, image.ZP, draw.Src)
 
 		text := k.IconHandlerFields["text_1"]
+		command := k.IconHandlerFields["command_1"]
 
 		icon, ok := k.IconHandlerFields["icon_1"]
 		if !ok {
@@ -47,6 +52,7 @@ func (c *IconStateHandler) Start(
 
 		if !c.State {
 			text = k.IconHandlerFields["text_2"]
+			command = k.IconHandlerFields["command_2"]
 
 			icon, ok := k.IconHandlerFields["icon_2"]
 			if !ok {
@@ -61,9 +67,13 @@ func (c *IconStateHandler) Start(
 
 		}
 
+		c.Command = command
+
 		i, _, err := image.Decode(f)
 
 		imgParsed, err := api.DrawText(i, text, k.TextSize, k.TextAlignment)
+
+		runCommand(command)
 
 		if err != nil {
 			log.Println(err)
@@ -109,4 +119,23 @@ func RegisterIconState() handlers.Module {
 	}, NewKey: func() api.KeyHandler {
 		return &IconStateKeyHandler{}
 	}, Name: "IconState"}
+}
+
+func runCommand(command string) {
+	go func() {
+		cmd := exec.Command("/bin/sh", "-c", "/usr/bin/nohup "+command)
+
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid:   true,
+			Pgid:      0,
+			Pdeathsig: syscall.SIGHUP,
+		}
+		if err := cmd.Start(); err != nil {
+			fmt.Println("There was a problem running ", command, ":", err)
+		} else {
+			pid := cmd.Process.Pid
+			cmd.Process.Release()
+			fmt.Println(command, " has been started with pid", pid)
+		}
+	}()
 }

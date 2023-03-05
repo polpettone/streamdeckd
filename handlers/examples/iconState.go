@@ -14,11 +14,13 @@ import (
 )
 
 type IconStateHandler struct {
-	Count    int
-	Running  bool
-	Callback func(image image.Image)
-	State    bool
-	Command  string
+	Count        int
+	Running      bool
+	Callback     func(image image.Image)
+	State        bool
+	Icon1        image.Image
+	Icon2        image.Image
+	CurrentImage image.Image
 }
 
 func (c *IconStateHandler) Start(
@@ -32,46 +34,27 @@ func (c *IconStateHandler) Start(
 
 	if c.Running {
 		img := image.NewRGBA(image.Rect(0, 0, info.IconSize, info.IconSize))
+		c.CurrentImage = img
+		c.LoadIcons(k)
 
 		draw.Draw(img, img.Bounds(), image.Black, image.ZP, draw.Src)
 
-		text := k.IconHandlerFields["text_1"]
+		text := k.IconHandlerFields["text_2"]
 		command := k.IconHandlerFields["command_1"]
 
-		icon, ok := k.IconHandlerFields["icon_1"]
-		if !ok {
-			return
-		}
-
-		f, err := os.Open(icon)
-
-		if err != nil {
-			log.Println(err)
-			return
+		if c.Icon1 != nil {
+			c.CurrentImage = c.Icon1
 		}
 
 		if !c.State {
-			text = k.IconHandlerFields["text_2"]
+			text = k.IconHandlerFields["text_1"]
 			command = k.IconHandlerFields["command_2"]
-
-			icon, ok := k.IconHandlerFields["icon_2"]
-			if !ok {
-				return
+			if c.Icon2 != nil {
+				c.CurrentImage = c.Icon2
 			}
-
-			f, err = os.Open(icon)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
 		}
 
-		c.Command = command
-
-		i, _, err := image.Decode(f)
-
-		imgParsed, err := api.DrawText(i, text, k.TextSize, k.TextAlignment)
+		imgParsed, err := api.DrawText(c.CurrentImage, text, k.TextSize, k.TextAlignment)
 
 		runCommand(command)
 
@@ -119,6 +102,50 @@ func RegisterIconState() handlers.Module {
 	}, NewKey: func() api.KeyHandler {
 		return &IconStateKeyHandler{}
 	}, Name: "IconState"}
+}
+
+// Both Icon Images must be loaded successfully
+// If one of both is missing, no image will be loaded
+func (c *IconStateHandler) LoadIcons(k api.Key) {
+
+	iconPath1, ok := k.IconHandlerFields["icon_1"]
+	if !ok {
+		return
+	}
+
+	iconFile1, err := os.Open(iconPath1)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	image1, _, err := image.Decode(iconFile1)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	c.Icon1 = image1
+
+	iconPath2, ok := k.IconHandlerFields["icon_2"]
+	if !ok {
+		return
+	}
+
+	iconFile2, err := os.Open(iconPath2)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	image2, _, err := image.Decode(iconFile2)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	c.Icon2 = image2
 }
 
 func runCommand(command string) {

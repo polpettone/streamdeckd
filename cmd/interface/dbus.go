@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/godbus/dbus/v5"
-	"github.com/polpettone/streamdeckd/cmd"
 	"github.com/polpettone/streamdeckd/cmd/models"
 	"github.com/unix-streamdeck/api"
 )
@@ -72,7 +71,7 @@ func (StreamDeckDBus) CommitConfig() *dbus.Error {
 
 func (StreamDeckDBus) GetModules() (string, *dbus.Error) {
 	var modules []api.Module
-	for _, module := range cmd.AvailableModules() {
+	for _, module := range AvailableModules() {
 		modules = append(modules, api.Module{Name: module.Name, IconFields: module.IconFields, KeyFields: module.KeyFields, IsIcon: module.NewIcon != nil, IsKey: module.NewKey != nil})
 	}
 	modulesString, err := json.Marshal(modules)

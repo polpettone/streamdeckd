@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/polpettone/streamdeckd/cmd"
 	"github.com/polpettone/streamdeckd/cmd/models"
 	"github.com/polpettone/streamdeckd/cmd/myConfig"
 	"github.com/shirou/gopsutil/v3/process"
@@ -207,7 +206,7 @@ func LoadConfig() {
 	}
 	if len(config.Modules) > 0 {
 		for _, module := range config.Modules {
-			cmd.LoadModule(module)
+			LoadModule(module)
 		}
 	}
 	myConfig.SetConfig(config)

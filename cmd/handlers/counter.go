@@ -1,12 +1,12 @@
-package _interface
+package handlers
 
 import (
+	"github.com/polpettone/streamdeckd/cmd/interface"
 	"image"
 	"image/draw"
 	"log"
 	"strconv"
 
-	"github.com/polpettone/streamdeckd/cmd"
 	"github.com/unix-streamdeck/api"
 )
 
@@ -58,8 +58,8 @@ func (CounterKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	}
 }
 
-func RegisterCounter() cmd.Module {
-	return cmd.Module{NewIcon: func() api.IconHandler {
+func RegisterCounter() _interface.Module {
+	return _interface.Module{NewIcon: func() api.IconHandler {
 		return &CounterIconHandler{Running: true, Count: 0}
 	}, NewKey: func() api.KeyHandler {
 		return &CounterKeyHandler{}

@@ -1,4 +1,4 @@
-package cmd
+package _interface
 
 import (
 	"github.com/unix-streamdeck/api"

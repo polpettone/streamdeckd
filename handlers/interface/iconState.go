@@ -1,4 +1,4 @@
-package examples
+package _interface
 
 import (
 	"fmt"
@@ -32,8 +32,6 @@ func (c *IconStateHandler) Start(
 	if c.Callback == nil {
 		c.Callback = callback
 	}
-
-	//myConfig..Config.Decks[0].Pages[0][0]
 
 	if c.Running {
 		img := image.NewRGBA(image.Rect(0, 0, info.IconSize, info.IconSize))
@@ -69,6 +67,8 @@ func (c *IconStateHandler) Start(
 		for k, _ := range devs {
 			log.Printf("devs: %s", k)
 		}
+
+		SetImage(devs["DL49K1A67580"], imgParsed, 7, 8)
 
 		if err != nil {
 			log.Println(err)

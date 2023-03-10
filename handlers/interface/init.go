@@ -1,4 +1,4 @@
-package examples
+package _interface
 
 import "github.com/polpettone/streamdeckd/handlers"
 

@@ -1,4 +1,4 @@
-package main
+package _interface
 
 import (
 	"context"
@@ -44,7 +44,7 @@ func SetImage(dev *models.VirtualDev, img image.Image, i int, page int) {
 		err := dev.Deck.SetImage(uint8(i), img)
 		if err != nil {
 			if strings.Contains(err.Error(), "hidapi") {
-				disconnect(dev)
+				Disconnect(dev)
 			} else if strings.Contains(err.Error(), "dimensions") {
 				log.Println(err)
 			} else {
@@ -89,7 +89,7 @@ func SetPage(dev *models.VirtualDev, page int) {
 	}
 
 	if page != dev.Page {
-		unmountPageHandlers(dev.Config[dev.Page])
+		UnmountPageHandlers(dev.Config[dev.Page])
 	}
 
 	dev.Page = page
@@ -150,10 +150,10 @@ func SetKey(dev *models.VirtualDev, currentKey *api.Key, i int, page int) {
 
 func HandleInput(dev *models.VirtualDev, key *api.Key, page int) {
 	if key.Command != "" {
-		runCommand(key.Command)
+		RunCommand(key.Command)
 	}
 	if key.Keybind != "" {
-		runCommand("xdotool key " + key.Keybind)
+		RunCommand("xdotool key " + key.Keybind)
 	}
 	if key.SwitchPage != 0 {
 		page = key.SwitchPage - 1
@@ -166,7 +166,7 @@ func HandleInput(dev *models.VirtualDev, key *api.Key, page int) {
 		}
 	}
 	if key.Url != "" {
-		runCommand("xdg-open " + key.Url)
+		RunCommand("xdg-open " + key.Url)
 	}
 	if key.KeyHandler != "" {
 		var deckInfo api.StreamDeckInfo
@@ -206,7 +206,7 @@ func Listen(dev *models.VirtualDev) {
 		select {
 		case k, ok := <-kch:
 			if !ok {
-				disconnect(dev)
+				Disconnect(dev)
 				return
 			}
 			if k.Pressed == true {

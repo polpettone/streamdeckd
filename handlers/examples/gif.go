@@ -2,15 +2,16 @@ package examples
 
 import (
 	"context"
-	"github.com/unix-streamdeck/api"
-	"github.com/unix-streamdeck/streamdeckd/handlers"
-	"golang.org/x/sync/semaphore"
 	"image"
 	"image/gif"
 	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/polpettone/streamdeckd/handlers"
+	"github.com/unix-streamdeck/api"
+	"golang.org/x/sync/semaphore"
 )
 
 type GifIconHandler struct {

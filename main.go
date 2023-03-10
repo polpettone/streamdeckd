@@ -6,12 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/shirou/gopsutil/v3/process"
-	"github.com/unix-streamdeck/api"
-	"github.com/unix-streamdeck/driver"
-	"github.com/unix-streamdeck/streamdeckd/handlers"
-	"github.com/unix-streamdeck/streamdeckd/handlers/examples"
-	"golang.org/x/sync/semaphore"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -22,16 +16,18 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/polpettone/streamdeckd/handlers"
+	"github.com/polpettone/streamdeckd/handlers/examples"
+	"github.com/polpettone/streamdeckd/handlers/models"
+	"github.com/polpettone/streamdeckd/handlers/myConfig"
+	"github.com/shirou/gopsutil/v3/process"
+	"github.com/unix-streamdeck/api"
+	streamdeck "github.com/unix-streamdeck/driver"
+	"golang.org/x/sync/semaphore"
 )
 
-type VirtualDev struct {
-	Deck   streamdeck.Device
-	Page   int
-	IsOpen bool
-	Config []api.Page
-}
-
-var devs map[string]*VirtualDev
+var devs map[string]*models.VirtualDev
 var config *api.Config
 var migrateConfig = false
 var configPath string
@@ -62,8 +58,9 @@ func main() {
 	go InitDBUS()
 	examples.RegisterBaseModules()
 	loadConfig()
-	devs = make(map[string]*VirtualDev)
+	devs = make(map[string]*models.VirtualDev)
 	attemptConnection()
+
 }
 
 func checkOtherRunningInstances() {
@@ -81,7 +78,7 @@ func checkOtherRunningInstances() {
 
 func attemptConnection() {
 	for isRunning {
-		dev := &VirtualDev{}
+		dev := &models.VirtualDev{}
 		dev, _ = openDevice()
 		if dev.IsOpen {
 			SetPage(dev, dev.Page)
@@ -106,7 +103,7 @@ func attemptConnection() {
 	}
 }
 
-func disconnect(dev *VirtualDev) {
+func disconnect(dev *models.VirtualDev) {
 	ctx := context.Background()
 	err := disconnectSem.Acquire(ctx, 1)
 	if err != nil {
@@ -122,19 +119,19 @@ func disconnect(dev *VirtualDev) {
 	unmountDevHandlers(dev)
 }
 
-func openDevice() (*VirtualDev, error) {
+func openDevice() (*models.VirtualDev, error) {
 	ctx := context.Background()
 	err := connectSem.Acquire(ctx, 1)
 	if err != nil {
-		return &VirtualDev{}, err
+		return &models.VirtualDev{}, err
 	}
 	defer connectSem.Release(1)
 	d, err := streamdeck.Devices()
 	if err != nil {
-		return &VirtualDev{}, err
+		return &models.VirtualDev{}, err
 	}
 	if len(d) == 0 {
-		return &VirtualDev{}, errors.New("No streamdeck devices found")
+		return &models.VirtualDev{}, errors.New("No streamdeck devices found")
 	}
 	device := streamdeck.Device{Serial: ""}
 	for i := range d {
@@ -146,7 +143,7 @@ func openDevice() (*VirtualDev, error) {
 			} else if d[i].Serial == s && !devs[s].IsOpen {
 				err = d[i].Open()
 				if err != nil {
-					return &VirtualDev{}, err
+					return &models.VirtualDev{}, err
 				}
 				devs[s].Deck = d[i]
 				devs[s].IsOpen = true
@@ -158,11 +155,11 @@ func openDevice() (*VirtualDev, error) {
 		}
 	}
 	if len(device.Serial) != 12 {
-		return &VirtualDev{}, errors.New("No streamdeck devices found")
+		return &models.VirtualDev{}, errors.New("No streamdeck devices found")
 	}
 	err = device.Open()
 	if err != nil {
-		return &VirtualDev{}, err
+		return &models.VirtualDev{}, err
 	}
 	devNo := -1
 	if migrateConfig {
@@ -185,9 +182,12 @@ func openDevice() (*VirtualDev, error) {
 		config.Decks = append(config.Decks, api.Deck{Serial: device.Serial, Pages: pages})
 		devNo = len(config.Decks) - 1
 	}
-	dev := &VirtualDev{Deck: device, Page: 0, IsOpen: true, Config: config.Decks[devNo].Pages}
+	dev := &models.VirtualDev{Deck: device, Page: 0, IsOpen: true, Config: config.Decks[devNo].Pages}
 	devs[device.Serial] = dev
 	log.Println("Device (" + device.Serial + ") connected")
+
+	myConfig.SetDevs(devs)
+
 	return dev, nil
 }
 
@@ -216,6 +216,7 @@ func loadConfig() {
 			handlers.LoadModule(module)
 		}
 	}
+	myConfig.SetConfig(config)
 }
 
 func readConfig() (*api.Config, error) {
@@ -344,7 +345,7 @@ func unmountHandlers() {
 	}
 }
 
-func unmountDevHandlers(dev *VirtualDev) {
+func unmountDevHandlers(dev *models.VirtualDev) {
 	for i := range dev.Config {
 		unmountPageHandlers(dev.Config[i])
 	}

@@ -1,4 +1,4 @@
-module github.com/unix-streamdeck/streamdeckd
+module github.com/polpettone/streamdeckd
 
 go 1.14
 

@@ -8,15 +8,16 @@ import (
 	"os"
 	"strings"
 
+	"github.com/polpettone/streamdeckd/handlers"
+	"github.com/polpettone/streamdeckd/handlers/models"
 	"github.com/unix-streamdeck/api"
 	_ "github.com/unix-streamdeck/driver"
-	"github.com/unix-streamdeck/streamdeckd/handlers"
 	"golang.org/x/sync/semaphore"
 )
 
 var sem = semaphore.NewWeighted(int64(1))
 
-func LoadImage(dev *VirtualDev, path string) (image.Image, error) {
+func LoadImage(dev *models.VirtualDev, path string) (image.Image, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -31,7 +32,7 @@ func LoadImage(dev *VirtualDev, path string) (image.Image, error) {
 	return api.ResizeImage(img, int(dev.Deck.Pixels)), nil
 }
 
-func SetImage(dev *VirtualDev, img image.Image, i int, page int) {
+func SetImage(dev *models.VirtualDev, img image.Image, i int, page int) {
 	ctx := context.Background()
 	err := sem.Acquire(ctx, 1)
 	if err != nil {
@@ -53,7 +54,7 @@ func SetImage(dev *VirtualDev, img image.Image, i int, page int) {
 	}
 }
 
-func SetKeyImage(dev *VirtualDev, currentKey *api.Key, i int, page int) {
+func SetKeyImage(dev *models.VirtualDev, currentKey *api.Key, i int, page int) {
 	if currentKey.Buff == nil {
 		if currentKey.Icon == "" {
 			img := image.NewRGBA(image.Rect(0, 0, int(dev.Deck.Pixels), int(dev.Deck.Pixels)))
@@ -81,7 +82,7 @@ func SetKeyImage(dev *VirtualDev, currentKey *api.Key, i int, page int) {
 	}
 }
 
-func SetPage(dev *VirtualDev, page int) {
+func SetPage(dev *models.VirtualDev, page int) {
 	if len(dev.Config) <= page {
 		log.Printf("Requested page %d does not exists \n", page)
 		return
@@ -100,7 +101,7 @@ func SetPage(dev *VirtualDev, page int) {
 	EmitPage(dev, page)
 }
 
-func SetKey(dev *VirtualDev, currentKey *api.Key, i int, page int) {
+func SetKey(dev *models.VirtualDev, currentKey *api.Key, i int, page int) {
 	var deckInfo api.StreamDeckInfo
 	for i := range sDInfo {
 		if sDInfo[i].Serial == dev.Deck.Serial {
@@ -147,7 +148,7 @@ func SetKey(dev *VirtualDev, currentKey *api.Key, i int, page int) {
 	}
 }
 
-func HandleInput(dev *VirtualDev, key *api.Key, page int) {
+func HandleInput(dev *models.VirtualDev, key *api.Key, page int) {
 	if key.Command != "" {
 		runCommand(key.Command)
 	}
@@ -196,7 +197,7 @@ func HandleInput(dev *VirtualDev, key *api.Key, page int) {
 	}
 }
 
-func Listen(dev *VirtualDev) {
+func Listen(dev *models.VirtualDev) {
 	kch, err := dev.Deck.ReadKeys()
 	if err != nil {
 		log.Println(err)

@@ -1,6 +1,6 @@
 package examples
 
-import "github.com/unix-streamdeck/streamdeckd/handlers"
+import "github.com/polpettone/streamdeckd/handlers"
 
 func RegisterBaseModules() {
 	handlers.RegisterModule(RegisterGif())

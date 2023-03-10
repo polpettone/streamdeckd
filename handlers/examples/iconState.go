@@ -9,8 +9,9 @@ import (
 	"os/exec"
 	"syscall"
 
+	"github.com/polpettone/streamdeckd/handlers"
+	"github.com/polpettone/streamdeckd/handlers/myConfig"
 	"github.com/unix-streamdeck/api"
-	"github.com/unix-streamdeck/streamdeckd/handlers"
 )
 
 type IconStateHandler struct {
@@ -31,6 +32,8 @@ func (c *IconStateHandler) Start(
 	if c.Callback == nil {
 		c.Callback = callback
 	}
+
+	//myConfig..Config.Decks[0].Pages[0][0]
 
 	if c.Running {
 		img := image.NewRGBA(image.Rect(0, 0, info.IconSize, info.IconSize))
@@ -57,6 +60,15 @@ func (c *IconStateHandler) Start(
 		imgParsed, err := api.DrawText(c.CurrentImage, text, k.TextSize, k.TextAlignment)
 
 		runCommand(command)
+
+		key := myConfig.MyConfig.Decks[0].Pages[8][7]
+		devs := myConfig.MyDevs
+
+		log.Printf("key: %v", key)
+
+		for k, _ := range devs {
+			log.Printf("devs: %s", k)
+		}
 
 		if err != nil {
 			log.Println(err)
@@ -97,11 +109,13 @@ func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 }
 
 func RegisterIconState() handlers.Module {
-	return handlers.Module{NewIcon: func() api.IconHandler {
-		return &IconStateHandler{Running: true, Count: 0}
-	}, NewKey: func() api.KeyHandler {
-		return &IconStateKeyHandler{}
-	}, Name: "IconState"}
+	return handlers.Module{
+		NewIcon: func() api.IconHandler {
+			return &IconStateHandler{Running: true, Count: 0}
+
+		}, NewKey: func() api.KeyHandler {
+			return &IconStateKeyHandler{}
+		}, Name: "IconState"}
 }
 
 // Both Icon Images must be loaded successfully

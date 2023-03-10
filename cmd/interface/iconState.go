@@ -1,8 +1,7 @@
-package handlers
+package _interface
 
 import (
 	"fmt"
-	"github.com/polpettone/streamdeckd/cmd/interface"
 	"image"
 	"image/draw"
 	"log"
@@ -10,7 +9,6 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/polpettone/streamdeckd/cmd/myConfig"
 	"github.com/unix-streamdeck/api"
 )
 
@@ -59,16 +57,8 @@ func (c *IconStateHandler) Start(
 
 		runCommand(command)
 
-		key := myConfig.MyConfig.Decks[0].Pages[8][7]
-		devs := myConfig.MyDevs
-
-		log.Printf("key: %v", key)
-
-		for k, _ := range devs {
-			log.Printf("devs: %s", k)
-		}
-
-		_interface.SetImage(devs["DL49K1A67580"], imgParsed, 7, 8)
+		//devs := myConfig.MyDevs
+		//SetImage(devs["DL49K1A67580"], imgParsed, 7, 8)
 
 		if err != nil {
 			log.Println(err)
@@ -108,8 +98,8 @@ func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	}
 }
 
-func RegisterIconState() _interface.Module {
-	return _interface.Module{
+func RegisterIconState() Module {
+	return Module{
 		NewIcon: func() api.IconHandler {
 			return &IconStateHandler{Running: true, Count: 0}
 

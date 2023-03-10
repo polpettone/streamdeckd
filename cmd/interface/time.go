@@ -1,7 +1,6 @@
-package handlers
+package _interface
 
 import (
-	"github.com/polpettone/streamdeckd/cmd/interface"
 	"image"
 	"image/draw"
 	"log"
@@ -57,8 +56,8 @@ func (t *TimeIconHandler) timeLoop(k api.Key, info api.StreamDeckInfo, callback 
 	}
 }
 
-func RegisterTime() _interface.Module {
-	return _interface.Module{NewIcon: func() api.IconHandler {
+func RegisterTime() Module {
+	return Module{NewIcon: func() api.IconHandler {
 		return &TimeIconHandler{Running: true}
 	}, Name: "Time"}
 }

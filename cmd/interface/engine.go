@@ -6,9 +6,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/polpettone/streamdeckd/handlers"
-	"github.com/polpettone/streamdeckd/handlers/models"
-	"github.com/polpettone/streamdeckd/handlers/myConfig"
+	"github.com/polpettone/streamdeckd/cmd"
+	"github.com/polpettone/streamdeckd/cmd/models"
+	"github.com/polpettone/streamdeckd/cmd/myConfig"
 	"github.com/shirou/gopsutil/v3/process"
 	"github.com/unix-streamdeck/api"
 	"github.com/unix-streamdeck/driver"
@@ -207,7 +207,7 @@ func LoadConfig() {
 	}
 	if len(config.Modules) > 0 {
 		for _, module := range config.Modules {
-			handlers.LoadModule(module)
+			cmd.LoadModule(module)
 		}
 	}
 	myConfig.SetConfig(config)

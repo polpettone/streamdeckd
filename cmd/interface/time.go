@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/polpettone/streamdeckd/handlers"
+	"github.com/polpettone/streamdeckd/cmd"
 	"github.com/unix-streamdeck/api"
 )
 
@@ -57,8 +57,8 @@ func (t *TimeIconHandler) timeLoop(k api.Key, info api.StreamDeckInfo, callback 
 	}
 }
 
-func RegisterTime() handlers.Module {
-	return handlers.Module{NewIcon: func() api.IconHandler {
+func RegisterTime() cmd.Module {
+	return cmd.Module{NewIcon: func() api.IconHandler {
 		return &TimeIconHandler{Running: true}
 	}, Name: "Time"}
 }

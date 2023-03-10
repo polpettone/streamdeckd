@@ -1,7 +1,7 @@
 package myConfig
 
 import (
-	"github.com/polpettone/streamdeckd/handlers/models"
+	"github.com/polpettone/streamdeckd/cmd/models"
 	"github.com/unix-streamdeck/api"
 )
 

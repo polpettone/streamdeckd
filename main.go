@@ -1,7 +1,7 @@
 package main
 
 import (
-	_interface "github.com/polpettone/streamdeckd/handlers/interface"
+	_interface "github.com/polpettone/streamdeckd/cmd/interface"
 )
 
 func main() {

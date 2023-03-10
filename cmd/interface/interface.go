@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/polpettone/streamdeckd/handlers"
-	"github.com/polpettone/streamdeckd/handlers/models"
+	"github.com/polpettone/streamdeckd/cmd"
+	"github.com/polpettone/streamdeckd/cmd/models"
 	"github.com/unix-streamdeck/api"
 	_ "github.com/unix-streamdeck/driver"
 	"golang.org/x/sync/semaphore"
@@ -114,7 +114,7 @@ func SetKey(dev *models.VirtualDev, currentKey *api.Key, i int, page int) {
 
 		} else if currentKey.IconHandlerStruct == nil {
 			var handler api.IconHandler
-			modules := handlers.AvailableModules()
+			modules := cmd.AvailableModules()
 			for _, module := range modules {
 				if module.Name == currentKey.IconHandler {
 					handler = module.NewIcon()
@@ -182,7 +182,7 @@ func HandleInput(dev *models.VirtualDev, key *api.Key, page int) {
 		}
 		if key.KeyHandlerStruct == nil {
 			var handler api.KeyHandler
-			modules := handlers.AvailableModules()
+			modules := cmd.AvailableModules()
 			for _, module := range modules {
 				if module.Name == key.KeyHandler {
 					handler = module.NewKey()

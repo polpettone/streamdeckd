@@ -1,4 +1,4 @@
-package handlers
+package cmd
 
 import (
 	"github.com/unix-streamdeck/api"
@@ -7,17 +7,14 @@ import (
 )
 
 type Module struct {
-	Name	string
-	NewIcon func() api.IconHandler
-	NewKey func() api.KeyHandler
+	Name       string
+	NewIcon    func() api.IconHandler
+	NewKey     func() api.KeyHandler
 	IconFields []api.Field
-	KeyFields []api.Field
+	KeyFields  []api.Field
 }
 
-
-
 var modules []Module
-
 
 func AvailableModules() []Module {
 	return modules

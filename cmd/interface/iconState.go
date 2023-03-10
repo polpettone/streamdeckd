@@ -9,8 +9,8 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/polpettone/streamdeckd/handlers"
-	"github.com/polpettone/streamdeckd/handlers/myConfig"
+	"github.com/polpettone/streamdeckd/cmd"
+	"github.com/polpettone/streamdeckd/cmd/myConfig"
 	"github.com/unix-streamdeck/api"
 )
 
@@ -108,8 +108,8 @@ func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	}
 }
 
-func RegisterIconState() handlers.Module {
-	return handlers.Module{
+func RegisterIconState() cmd.Module {
+	return cmd.Module{
 		NewIcon: func() api.IconHandler {
 			return &IconStateHandler{Running: true, Count: 0}
 

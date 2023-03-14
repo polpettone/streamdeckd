@@ -87,7 +87,7 @@ func attemptConnection() {
 	for isRunning {
 
 		dev := &models.VirtualDev{}
-		dev, _ = OpenDevice()
+		dev, _ = openDevice()
 
 		if dev.IsOpen {
 
@@ -133,7 +133,7 @@ func Disconnect(dev *models.VirtualDev) {
 	unmountDevHandlers(dev)
 }
 
-func OpenDevice() (*models.VirtualDev, error) {
+func openDevice() (*models.VirtualDev, error) {
 	ctx := context.Background()
 	err := connectSem.Acquire(ctx, 1)
 	if err != nil {

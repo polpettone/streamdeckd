@@ -37,51 +37,69 @@ var basicConfig = api.Config{
 var isRunning = true
 
 func Run() {
+
 	checkOtherRunningInstances()
+
 	configPtr := flag.String("config", configPath, "Path to config file")
+
 	flag.Parse()
+
 	if *configPtr != "" {
 		configPath = *configPtr
 	} else {
+
 		basePath := os.Getenv("HOME") + string(os.PathSeparator) + ".config"
 		if os.Getenv("XDG_CONFIG_HOME") != "" {
 			basePath = os.Getenv("XDG_CONFIG_HOME")
 		}
+
 		configPath = basePath + string(os.PathSeparator) + ".streamdeck-config.json"
 	}
+
 	cleanupHook()
+
 	go InitDBUS()
+
 	RegisterBaseModules()
-	LoadConfig()
+
+	loadConfig()
 	devs = make(map[string]*models.VirtualDev)
-	AttemptConnection()
+	attemptConnection()
 }
 
 func checkOtherRunningInstances() {
 	processes, err := process.Processes()
 	if err != nil {
-		log.Println("Could not check for other instances of streamdeckd, assuming no others running")
+		log.Println("Could not check for other instances of streamdeckd, assuming no others running: %s", err)
 	}
 	for _, proc := range processes {
 		name, err := proc.Name()
-		if err == nil && name == "streamdeckd" && int(proc.Pid) != os.Getpid() {
+		if err == nil &&
+			name == "streamdeckd" &&
+			int(proc.Pid) != os.Getpid() {
 			log.Fatalln("Another instance of streamdeckd is already running, exiting...")
 		}
 	}
 }
 
-func AttemptConnection() {
+func attemptConnection() {
+
 	for isRunning {
+
 		dev := &models.VirtualDev{}
 		dev, _ = OpenDevice()
+
 		if dev.IsOpen {
+
 			SetPage(dev, dev.Page)
 			found := false
+
 			for i := range sDInfo {
 				if sDInfo[i].Serial == dev.Deck.Serial {
 					found = true
 				}
 			}
+
 			if !found {
 				sDInfo = append(sDInfo, api.StreamDeckInfo{
 					Cols:     int(dev.Deck.Columns),
@@ -91,7 +109,9 @@ func AttemptConnection() {
 					Serial:   dev.Deck.Serial,
 				})
 			}
+
 			go Listen(dev)
+
 		}
 		time.Sleep(250 * time.Millisecond)
 	}
@@ -185,27 +205,35 @@ func OpenDevice() (*models.VirtualDev, error) {
 	return dev, nil
 }
 
-func LoadConfig() {
+func loadConfig() {
+
 	var err error
+
 	config, err = ReadConfig()
+
 	if err != nil && !os.IsNotExist(err) {
 		log.Println(err)
 	} else if os.IsNotExist(err) {
+
 		file, err := os.Create(configPath)
 		if err != nil {
 			log.Println(err)
 		}
+
 		err = file.Close()
 		if err != nil {
 			log.Println(err)
 		}
+
 		config = &basicConfig
 		err = SaveConfig()
 		if err != nil {
 			log.Println(err)
 		}
+
 	}
 	if len(config.Modules) > 0 {
+
 		for _, module := range config.Modules {
 			LoadModule(module)
 		}
@@ -315,7 +343,7 @@ func SetConfig(configString string) error {
 
 func ReloadConfig() error {
 	unmountHandlers()
-	LoadConfig()
+	loadConfig()
 	for s := range devs {
 		dev := devs[s]
 		for i := range config.Decks {

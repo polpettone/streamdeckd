@@ -6,12 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/polpettone/streamdeckd/cmd/models"
-	"github.com/polpettone/streamdeckd/cmd/myConfig"
-	"github.com/shirou/gopsutil/v3/process"
-	"github.com/unix-streamdeck/api"
-	"github.com/unix-streamdeck/driver"
-	"golang.org/x/sync/semaphore"
 	"io/ioutil"
 	"log"
 	"os"
@@ -19,6 +13,13 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/polpettone/streamdeckd/cmd/models"
+	"github.com/polpettone/streamdeckd/cmd/myConfig"
+	"github.com/shirou/gopsutil/v3/process"
+	"github.com/unix-streamdeck/api"
+	streamdeck "github.com/unix-streamdeck/driver"
+	"golang.org/x/sync/semaphore"
 )
 
 var devs map[string]*models.VirtualDev
@@ -36,7 +37,7 @@ var basicConfig = api.Config{
 var isRunning = true
 
 func Run() {
-	CheckOtherRunningInstances()
+	checkOtherRunningInstances()
 	configPtr := flag.String("config", configPath, "Path to config file")
 	flag.Parse()
 	if *configPtr != "" {
@@ -48,7 +49,7 @@ func Run() {
 		}
 		configPath = basePath + string(os.PathSeparator) + ".streamdeck-config.json"
 	}
-	CleanupHook()
+	cleanupHook()
 	go InitDBUS()
 	RegisterBaseModules()
 	LoadConfig()
@@ -56,7 +57,7 @@ func Run() {
 	AttemptConnection()
 }
 
-func CheckOtherRunningInstances() {
+func checkOtherRunningInstances() {
 	processes, err := process.Processes()
 	if err != nil {
 		log.Println("Could not check for other instances of streamdeckd, assuming no others running")
@@ -109,7 +110,7 @@ func Disconnect(dev *models.VirtualDev) {
 	log.Println("Device (" + dev.Deck.Serial + ") disconnected")
 	_ = dev.Deck.Close()
 	dev.IsOpen = false
-	UnmountDevHandlers(dev)
+	unmountDevHandlers(dev)
 }
 
 func OpenDevice() (*models.VirtualDev, error) {
@@ -250,21 +251,38 @@ func RunCommand(command string) {
 	}()
 }
 
-func CleanupHook() {
+func cleanupHook() {
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGSTOP, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGINT)
+
+	signal.Notify(sigs,
+		syscall.SIGSTOP,
+		syscall.SIGHUP,
+		syscall.SIGTERM,
+		syscall.SIGKILL,
+		syscall.SIGQUIT,
+		syscall.SIGUSR1,
+		syscall.SIGUSR2,
+		syscall.SIGINT)
+
 	go func() {
 		<-sigs
+
 		log.Println("Cleaning up")
+
 		isRunning = false
-		UnmountHandlers()
+
+		unmountHandlers()
+
 		var err error
+
 		for s := range devs {
+
 			if devs[s].IsOpen {
 				err = devs[s].Deck.Reset()
 				if err != nil {
 					log.Println(err)
 				}
+
 				err = devs[s].Deck.Close()
 				if err != nil {
 					log.Println(err)
@@ -276,7 +294,7 @@ func CleanupHook() {
 }
 
 func SetConfig(configString string) error {
-	UnmountHandlers()
+	unmountHandlers()
 	var err error
 	config = nil
 	err = json.Unmarshal([]byte(configString), &config)
@@ -296,7 +314,7 @@ func SetConfig(configString string) error {
 }
 
 func ReloadConfig() error {
-	UnmountHandlers()
+	unmountHandlers()
 	LoadConfig()
 	for s := range devs {
 		dev := devs[s]
@@ -331,14 +349,14 @@ func SaveConfig() error {
 	}
 	return nil
 }
-func UnmountHandlers() {
+func unmountHandlers() {
 	for s := range devs {
 		dev := devs[s]
-		UnmountDevHandlers(dev)
+		unmountDevHandlers(dev)
 	}
 }
 
-func UnmountDevHandlers(dev *models.VirtualDev) {
+func unmountDevHandlers(dev *models.VirtualDev) {
 	for i := range dev.Config {
 		UnmountPageHandlers(dev.Config[i])
 	}

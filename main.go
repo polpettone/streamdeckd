@@ -4,6 +4,9 @@ import (
 	_interface "github.com/polpettone/streamdeckd/cmd/interface"
 )
 
+var engine *_interface.Engine
+
 func main() {
-	_interface.Run()
+	engine = _interface.NewEngine()
+	engine.Run()
 }

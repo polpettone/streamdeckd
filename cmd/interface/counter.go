@@ -51,7 +51,7 @@ func (CounterKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 		return
 	}
 	handler := key.IconHandlerStruct.(*CounterIconHandler)
-	handler.Count += 1
+	handler.Count += 4
 	if handler.Callback != nil {
 		handler.Start(key, info, handler.Callback)
 	}

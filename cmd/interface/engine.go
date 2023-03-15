@@ -22,30 +22,51 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-var devs map[string]*models.VirtualDev
-var config *api.Config
-var migrateConfig = false
-var configPath string
-var disconnectSem = semaphore.NewWeighted(1)
-var connectSem = semaphore.NewWeighted(1)
-var basicConfig = api.Config{
-	Modules: []string{},
-	Decks: []api.Deck{
-		{},
-	},
+type Engine struct {
+	devs          map[string]*models.VirtualDev
+	config        *api.Config
+	migrateConfig bool
+	configPath    string
+	disconnectSem *semaphore.Weighted
+	connectSem    *semaphore.Weighted
+	basicConfig   api.Config
+	isRunning     bool
 }
-var isRunning = true
 
-func Run() {
+func NewEngine() *Engine {
+
+	return &Engine{
+
+		config:     nil,
+		configPath: "",
+
+		devs:          make(map[string]*models.VirtualDev),
+		migrateConfig: false,
+		isRunning:     true,
+
+		disconnectSem: semaphore.NewWeighted(1),
+		connectSem:    semaphore.NewWeighted(2),
+
+		basicConfig: api.Config{
+			Modules: []string{},
+			Decks: []api.Deck{
+				{},
+			},
+		},
+	}
+
+}
+
+func (engine *Engine) Run() {
 
 	checkOtherRunningInstances()
 
-	configPtr := flag.String("config", configPath, "Path to config file")
+	configPtr := flag.String("config", engine.configPath, "Path to config file")
 
 	flag.Parse()
 
 	if *configPtr != "" {
-		configPath = *configPtr
+		engine.configPath = *configPtr
 	} else {
 
 		basePath := os.Getenv("HOME") + string(os.PathSeparator) + ".config"
@@ -53,18 +74,17 @@ func Run() {
 			basePath = os.Getenv("XDG_CONFIG_HOME")
 		}
 
-		configPath = basePath + string(os.PathSeparator) + ".streamdeck-config.json"
+		engine.configPath = basePath + string(os.PathSeparator) + ".streamdeck-config.json"
 	}
 
-	cleanupHook()
+	engine.cleanupHook()
 
 	go InitDBUS()
 
 	RegisterBaseModules()
 
-	loadConfig()
-	devs = make(map[string]*models.VirtualDev)
-	attemptConnection()
+	engine.loadConfig()
+	engine.attemptConnection()
 }
 
 func checkOtherRunningInstances() {
@@ -82,16 +102,16 @@ func checkOtherRunningInstances() {
 	}
 }
 
-func attemptConnection() {
+func (engine *Engine) attemptConnection() {
 
-	for isRunning {
+	for engine.isRunning {
 
 		dev := &models.VirtualDev{}
-		dev, _ = openDevice()
+		dev, _ = engine.openDevice()
 
 		if dev.IsOpen {
 
-			SetPage(dev, dev.Page)
+			SetPage(engine, dev, dev.Page)
 			found := false
 
 			for i := range sDInfo {
@@ -110,20 +130,20 @@ func attemptConnection() {
 				})
 			}
 
-			go Listen(dev)
+			go Listen(dev, engine)
 
 		}
 		time.Sleep(250 * time.Millisecond)
 	}
 }
 
-func Disconnect(dev *models.VirtualDev) {
+func (engine *Engine) Disconnect(dev *models.VirtualDev) {
 	ctx := context.Background()
-	err := disconnectSem.Acquire(ctx, 1)
+	err := engine.disconnectSem.Acquire(ctx, 1)
 	if err != nil {
 		return
 	}
-	defer disconnectSem.Release(1)
+	defer engine.disconnectSem.Release(1)
 	if !dev.IsOpen {
 		return
 	}
@@ -133,13 +153,13 @@ func Disconnect(dev *models.VirtualDev) {
 	unmountDevHandlers(dev)
 }
 
-func openDevice() (*models.VirtualDev, error) {
+func (engine *Engine) openDevice() (*models.VirtualDev, error) {
 	ctx := context.Background()
-	err := connectSem.Acquire(ctx, 1)
+	err := engine.connectSem.Acquire(ctx, 1)
 	if err != nil {
 		return &models.VirtualDev{}, err
 	}
-	defer connectSem.Release(1)
+	defer engine.connectSem.Release(1)
 	d, err := streamdeck.Devices()
 	if err != nil {
 		return &models.VirtualDev{}, err
@@ -150,18 +170,18 @@ func openDevice() (*models.VirtualDev, error) {
 	device := streamdeck.Device{Serial: ""}
 	for i := range d {
 		found := false
-		for s := range devs {
-			if d[i].ID == devs[s].Deck.ID && devs[s].IsOpen {
+		for s := range engine.devs {
+			if d[i].ID == engine.devs[s].Deck.ID && engine.devs[s].IsOpen {
 				found = true
 				break
-			} else if d[i].Serial == s && !devs[s].IsOpen {
+			} else if d[i].Serial == s && !engine.devs[s].IsOpen {
 				err = d[i].Open()
 				if err != nil {
 					return &models.VirtualDev{}, err
 				}
-				devs[s].Deck = d[i]
-				devs[s].IsOpen = true
-				return devs[s], nil
+				engine.devs[s].Deck = d[i]
+				engine.devs[s].IsOpen = true
+				return engine.devs[s], nil
 			}
 		}
 		if !found {
@@ -176,13 +196,13 @@ func openDevice() (*models.VirtualDev, error) {
 		return &models.VirtualDev{}, err
 	}
 	devNo := -1
-	if migrateConfig {
-		config.Decks[0].Serial = device.Serial
-		_ = SaveConfig()
-		migrateConfig = false
+	if engine.migrateConfig {
+		engine.config.Decks[0].Serial = device.Serial
+		_ = engine.SaveConfig()
+		engine.migrateConfig = false
 	}
-	for i := range config.Decks {
-		if config.Decks[i].Serial == device.Serial {
+	for i := range engine.config.Decks {
+		if engine.config.Decks[i].Serial == device.Serial {
 			devNo = i
 		}
 	}
@@ -193,29 +213,29 @@ func openDevice() (*models.VirtualDev, error) {
 			page = append(page, api.Key{})
 		}
 		pages = append(pages, page)
-		config.Decks = append(config.Decks, api.Deck{Serial: device.Serial, Pages: pages})
-		devNo = len(config.Decks) - 1
+		engine.config.Decks = append(engine.config.Decks, api.Deck{Serial: device.Serial, Pages: pages})
+		devNo = len(engine.config.Decks) - 1
 	}
-	dev := &models.VirtualDev{Deck: device, Page: 0, IsOpen: true, Config: config.Decks[devNo].Pages}
-	devs[device.Serial] = dev
+	dev := &models.VirtualDev{Deck: device, Page: 0, IsOpen: true, Config: engine.config.Decks[devNo].Pages}
+	engine.devs[device.Serial] = dev
 	log.Println("Device (" + device.Serial + ") connected")
 
-	myConfig.SetDevs(devs)
+	myConfig.SetDevs(engine.devs)
 
 	return dev, nil
 }
 
-func loadConfig() {
+func (engine *Engine) loadConfig() {
 
 	var err error
 
-	config, err = ReadConfig()
+	engine.config, err = engine.ReadConfig()
 
 	if err != nil && !os.IsNotExist(err) {
 		log.Println(err)
 	} else if os.IsNotExist(err) {
 
-		file, err := os.Create(configPath)
+		file, err := os.Create(engine.configPath)
 		if err != nil {
 			log.Println(err)
 		}
@@ -225,24 +245,24 @@ func loadConfig() {
 			log.Println(err)
 		}
 
-		config = &basicConfig
-		err = SaveConfig()
+		engine.config = &engine.basicConfig
+		err = engine.SaveConfig()
 		if err != nil {
 			log.Println(err)
 		}
 
 	}
-	if len(config.Modules) > 0 {
+	if len(engine.config.Modules) > 0 {
 
-		for _, module := range config.Modules {
+		for _, module := range engine.config.Modules {
 			LoadModule(module)
 		}
 	}
-	myConfig.SetConfig(config)
+	myConfig.SetConfig(engine.config)
 }
 
-func ReadConfig() (*api.Config, error) {
-	data, err := ioutil.ReadFile(configPath)
+func (engine *Engine) ReadConfig() (*api.Config, error) {
+	data, err := ioutil.ReadFile(engine.configPath)
 	if err != nil {
 		return &api.Config{}, err
 	}
@@ -255,7 +275,7 @@ func ReadConfig() (*api.Config, error) {
 			return &api.Config{}, err
 		}
 		config = api.Config{Modules: deprecatedConfig.Modules, Decks: []api.Deck{{Pages: deprecatedConfig.Pages, Serial: ""}}}
-		migrateConfig = true
+		engine.migrateConfig = true
 	}
 	return &config, nil
 }
@@ -279,7 +299,7 @@ func RunCommand(command string) {
 	}()
 }
 
-func cleanupHook() {
+func (engine *Engine) cleanupHook() {
 	sigs := make(chan os.Signal, 1)
 
 	signal.Notify(sigs,
@@ -297,21 +317,21 @@ func cleanupHook() {
 
 		log.Println("Cleaning up")
 
-		isRunning = false
+		engine.isRunning = false
 
-		unmountHandlers()
+		engine.unmountHandlers()
 
 		var err error
 
-		for s := range devs {
+		for _, v := range engine.devs {
 
-			if devs[s].IsOpen {
-				err = devs[s].Deck.Reset()
+			if v.IsOpen {
+				err = v.Deck.Reset()
 				if err != nil {
 					log.Println(err)
 				}
 
-				err = devs[s].Deck.Close()
+				err = v.Deck.Close()
 				if err != nil {
 					log.Println(err)
 				}
@@ -321,49 +341,47 @@ func cleanupHook() {
 	}()
 }
 
-func SetConfig(configString string) error {
-	unmountHandlers()
+func (engine *Engine) SetConfig(configString string) error {
+	engine.unmountHandlers()
 	var err error
-	config = nil
-	err = json.Unmarshal([]byte(configString), &config)
+	engine.config = nil
+	err = json.Unmarshal([]byte(configString), &engine.config)
 	if err != nil {
 		return err
 	}
-	for s := range devs {
-		dev := devs[s]
-		for i := range config.Decks {
-			if dev.Deck.Serial == config.Decks[i].Serial {
-				dev.Config = config.Decks[i].Pages
+	for _, dev := range engine.devs {
+		for i := range engine.config.Decks {
+			if dev.Deck.Serial == engine.config.Decks[i].Serial {
+				dev.Config = engine.config.Decks[i].Pages
 			}
 		}
-		SetPage(dev, devs[s].Page)
+		SetPage(engine, dev, dev.Page)
 	}
 	return nil
 }
 
-func ReloadConfig() error {
-	unmountHandlers()
-	loadConfig()
-	for s := range devs {
-		dev := devs[s]
-		for i := range config.Decks {
-			if dev.Deck.Serial == config.Decks[i].Serial {
-				dev.Config = config.Decks[i].Pages
+func (engine *Engine) ReloadConfig() error {
+	engine.unmountHandlers()
+	engine.loadConfig()
+	for _, dev := range engine.devs {
+		for i := range engine.config.Decks {
+			if dev.Deck.Serial == engine.config.Decks[i].Serial {
+				dev.Config = engine.config.Decks[i].Pages
 			}
 		}
-		SetPage(dev, devs[s].Page)
+		SetPage(engine, dev, dev.Page)
 	}
 	return nil
 }
 
-func SaveConfig() error {
-	f, err := os.OpenFile(configPath, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0755)
+func (engine *Engine) SaveConfig() error {
+	f, err := os.OpenFile(engine.configPath, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	var configString []byte
-	configString, err = json.Marshal(config)
+	configString, err = json.Marshal(engine.config)
 	if err != nil {
 		return err
 	}
@@ -377,9 +395,8 @@ func SaveConfig() error {
 	}
 	return nil
 }
-func unmountHandlers() {
-	for s := range devs {
-		dev := devs[s]
+func (engine *Engine) unmountHandlers() {
+	for _, dev := range engine.devs {
 		unmountDevHandlers(dev)
 	}
 }

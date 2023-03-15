@@ -15,7 +15,14 @@ var conn *dbus.Conn
 var sDbus *StreamDeckDBus
 var sDInfo []api.StreamDeckInfo
 
+func NewStreamDeckBus(engine *Engine) *StreamDeckDBus {
+	return &StreamDeckDBus{
+		engine: engine,
+	}
+}
+
 type StreamDeckDBus struct {
+	engine *Engine
 }
 
 func (s StreamDeckDBus) GetDeckInfo() (string, *dbus.Error) {
@@ -26,43 +33,42 @@ func (s StreamDeckDBus) GetDeckInfo() (string, *dbus.Error) {
 	return string(infoString), nil
 }
 
-func (StreamDeckDBus) GetConfig() (string, *dbus.Error) {
-	configString, err := json.Marshal(config)
+func (s StreamDeckDBus) GetConfig() (string, *dbus.Error) {
+	configString, err := json.Marshal(s.engine.config)
 	if err != nil {
 		return "", dbus.MakeFailedError(err)
 	}
 	return string(configString), nil
 }
 
-func (StreamDeckDBus) ReloadConfig() *dbus.Error {
-	err := ReloadConfig()
+func (s StreamDeckDBus) ReloadConfig() *dbus.Error {
+	err := s.engine.ReloadConfig()
 	if err != nil {
 		return dbus.MakeFailedError(err)
 	}
 	return nil
 }
 
-func (StreamDeckDBus) SetPage(serial string, page int) *dbus.Error {
-	for s := range devs {
-		if devs[s].Deck.Serial == serial {
-			dev := devs[s]
-			SetPage(dev, page)
+func (s StreamDeckDBus) SetPage(serial string, page int) *dbus.Error {
+	for _, dev := range s.engine.devs {
+		if dev.Deck.Serial == serial {
+			SetPage(s.engine, dev, page)
 			return nil
 		}
 	}
 	return dbus.MakeFailedError(errors.New("Device with Serial: " + serial + " could not be found"))
 }
 
-func (StreamDeckDBus) SetConfig(configString string) *dbus.Error {
-	err := SetConfig(configString)
+func (s StreamDeckDBus) SetConfig(configString string) *dbus.Error {
+	err := s.engine.SetConfig(configString)
 	if err != nil {
 		return dbus.MakeFailedError(err)
 	}
 	return nil
 }
 
-func (StreamDeckDBus) CommitConfig() *dbus.Error {
-	err := SaveConfig()
+func (s StreamDeckDBus) CommitConfig() *dbus.Error {
+	err := s.engine.SaveConfig()
 	if err != nil {
 		return dbus.MakeFailedError(err)
 	}
@@ -81,12 +87,12 @@ func (StreamDeckDBus) GetModules() (string, *dbus.Error) {
 	return string(modulesString), nil
 }
 
-func (StreamDeckDBus) PressButton(serial string, keyIndex int) *dbus.Error {
-	dev, ok := devs[serial]
+func (s StreamDeckDBus) PressButton(serial string, keyIndex int) *dbus.Error {
+	dev, ok := s.engine.devs[serial]
 	if !ok || !dev.IsOpen {
 		return dbus.MakeFailedError(errors.New("Can't find connected device: " + serial))
 	}
-	HandleInput(dev, &dev.Config[dev.Page][keyIndex], dev.Page)
+	HandleInput(s.engine, dev, &dev.Config[dev.Page][keyIndex], dev.Page)
 	return nil
 }
 

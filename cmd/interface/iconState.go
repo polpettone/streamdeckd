@@ -13,7 +13,6 @@ import (
 )
 
 type IconStateHandler struct {
-	Count        int
 	Running      bool
 	Callback     func(image image.Image)
 	State        bool
@@ -85,7 +84,6 @@ type IconStateKeyHandler struct{}
 func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 
 	handler := key.IconHandlerStruct.(*IconStateHandler)
-	handler.Count += 1
 
 	if handler.State {
 		handler.State = false
@@ -101,7 +99,7 @@ func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 func RegisterIconState() Module {
 	return Module{
 		NewIcon: func() api.IconHandler {
-			return &IconStateHandler{Running: true, Count: 0}
+			return &IconStateHandler{Running: true}
 
 		}, NewKey: func() api.KeyHandler {
 			return &IconStateKeyHandler{}

@@ -2,13 +2,13 @@ package _interface
 
 import (
 	"context"
+	"github.com/polpettone/streamdeckd/cmd/models"
 	"image"
 	"image/draw"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/polpettone/streamdeckd/cmd/models"
 	"github.com/unix-streamdeck/api"
 	_ "github.com/unix-streamdeck/driver"
 	"golang.org/x/sync/semaphore"

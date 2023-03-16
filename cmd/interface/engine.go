@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/polpettone/streamdeckd/cmd/models"
-	"github.com/polpettone/streamdeckd/cmd/myConfig"
 	"github.com/shirou/gopsutil/v3/process"
 	"github.com/unix-streamdeck/api"
 	streamdeck "github.com/unix-streamdeck/driver"
@@ -220,8 +219,6 @@ func (engine *Engine) openDevice() (*models.VirtualDev, error) {
 	engine.devs[device.Serial] = dev
 	log.Println("Device (" + device.Serial + ") connected")
 
-	myConfig.SetDevs(engine.devs)
-
 	return dev, nil
 }
 
@@ -258,7 +255,6 @@ func (engine *Engine) loadConfig() {
 			LoadModule(module)
 		}
 	}
-	myConfig.SetConfig(engine.config)
 }
 
 func (engine *Engine) ReadConfig() (*api.Config, error) {

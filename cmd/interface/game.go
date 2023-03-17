@@ -1,6 +1,7 @@
 package _interface
 
 import (
+	"github.com/polpettone/streamdeckd/cmd/models"
 	"github.com/unix-streamdeck/api"
 	"image"
 	"image/draw"
@@ -73,8 +74,8 @@ func (GameKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	}
 }
 
-func RegisterGame() Module {
-	return Module{
+func RegisterGame() models.Module {
+	return models.Module{
 		NewIcon: func() api.IconHandler {
 			return &GameHandler{Running: true}
 		},

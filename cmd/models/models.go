@@ -11,3 +11,11 @@ type VirtualDev struct {
 	IsOpen bool
 	Config []api.Page
 }
+
+type Module struct {
+	Name       string
+	NewIcon    func() api.IconHandler
+	NewKey     func() api.KeyHandler
+	IconFields []api.Field
+	KeyFields  []api.Field
+}

@@ -1,26 +1,18 @@
 package _interface
 
 import (
-	"github.com/unix-streamdeck/api"
+	"github.com/polpettone/streamdeckd/cmd/models"
 	"log"
 	"plugin"
 )
 
-type Module struct {
-	Name       string
-	NewIcon    func() api.IconHandler
-	NewKey     func() api.KeyHandler
-	IconFields []api.Field
-	KeyFields  []api.Field
-}
+var modules []models.Module
 
-var modules []Module
-
-func AvailableModules() []Module {
+func AvailableModules() []models.Module {
 	return modules
 }
 
-func RegisterModule(m Module) {
+func RegisterModule(m models.Module) {
 	for _, module := range modules {
 		if module.Name == m.Name {
 			log.Println("Module already loaded: " + m.Name)
@@ -43,8 +35,8 @@ func LoadModule(path string) {
 		log.Println(err)
 		return
 	}
-	var modMethod func() Module
-	modMethod, ok := mod.(func() Module)
+	var modMethod func() models.Module
+	modMethod, ok := mod.(func() models.Module)
 	if !ok {
 		log.Println("Failed to load module: " + path)
 		return

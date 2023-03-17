@@ -1,7 +1,8 @@
-package _interface
+package modules
 
 import (
 	"fmt"
+	"github.com/polpettone/streamdeckd/cmd/models"
 	"image"
 	"image/draw"
 	"log"
@@ -96,8 +97,8 @@ func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	}
 }
 
-func RegisterIconState() Module {
-	return Module{
+func RegisterIconState() models.Module {
+	return models.Module{
 		NewIcon: func() api.IconHandler {
 			return &IconStateHandler{Running: true}
 

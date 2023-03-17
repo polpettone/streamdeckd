@@ -56,7 +56,9 @@ func (g *GameHandler) Stop() {
 	g.Running = false
 }
 
-type GameKeyHandler struct{}
+type GameKeyHandler struct {
+	engine *Engine
+}
 
 func (GameKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	handler := key.IconHandlerStruct.(*GameHandler)

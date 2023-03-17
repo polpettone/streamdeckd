@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"github.com/polpettone/streamdeckd/cmd/models"
 	"image"
 	"image/draw"
 	"log"
@@ -55,10 +54,4 @@ func (t *TimeIconHandler) timeLoop(k api.Key, info api.StreamDeckInfo, callback 
 			time.Sleep(time.Second)
 		}
 	}
-}
-
-func RegisterTime() models.Module {
-	return models.Module{NewIcon: func() api.IconHandler {
-		return &TimeIconHandler{Running: true}
-	}, Name: "Time"}
 }

@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"github.com/polpettone/streamdeckd/cmd/models"
 	"image"
 	"image/draw"
 	"log"
@@ -56,12 +55,4 @@ func (CounterKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	if handler.Callback != nil {
 		handler.Start(key, info, handler.Callback)
 	}
-}
-
-func RegisterCounter() models.Module {
-	return models.Module{NewIcon: func() api.IconHandler {
-		return &CounterIconHandler{Running: true, Count: 0}
-	}, NewKey: func() api.KeyHandler {
-		return &CounterKeyHandler{}
-	}, Name: "Counter"}
 }

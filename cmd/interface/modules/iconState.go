@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"github.com/polpettone/streamdeckd/cmd/models"
 	"github.com/polpettone/streamdeckd/pkg"
 	"image"
 	"image/draw"
@@ -90,16 +89,6 @@ func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	if handler.Callback != nil {
 		handler.Start(key, info, handler.Callback)
 	}
-}
-
-func RegisterIconState() models.Module {
-	return models.Module{
-		NewIcon: func() api.IconHandler {
-			return &IconStateHandler{Running: true}
-
-		}, NewKey: func() api.KeyHandler {
-			return &IconStateKeyHandler{}
-		}, Name: "IconState"}
 }
 
 // Both Icon Images must be loaded successfully

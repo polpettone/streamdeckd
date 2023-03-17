@@ -7,12 +7,12 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-func RegisterBaseModules() {
+func RegisterBaseModules(action models.Action) {
 	RegisterModule(RegisterGif())
 	RegisterModule(RegisterTime())
 	RegisterModule(RegisterCounter())
 	RegisterModule(RegisterIconState())
-	RegisterModule(RegisterGame())
+	RegisterModule(RegisterGame(action))
 }
 
 func RegisterIconState() models.Module {
@@ -45,4 +45,16 @@ func RegisterCounter() models.Module {
 	}, NewKey: func() api.KeyHandler {
 		return &modules2.CounterKeyHandler{}
 	}, Name: "Counter"}
+}
+
+func RegisterGame(action models.Action) models.Module {
+	return models.Module{
+		NewIcon: func() api.IconHandler {
+			return &modules2.GameHandler{Running: true}
+		},
+		NewKey: func() api.KeyHandler {
+			return &modules2.GameKeyHandler{Action: action}
+		},
+		Name: "Game",
+	}
 }

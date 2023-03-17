@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"image"
 	"log"
 	"os"
 	"os/signal"
@@ -29,6 +30,10 @@ type Engine struct {
 }
 
 var currentEngine *Engine
+
+func (engine *Engine) SetImage(img image.Image, i int, page int) {
+	SetImage(engine, engine.devs["CL33L2A02177"], img, i, page)
+}
 
 func NewEngine() *Engine {
 
@@ -78,7 +83,7 @@ func (engine *Engine) Run() {
 
 	go InitDBUS()
 
-	RegisterBaseModules()
+	RegisterBaseModules(engine)
 
 	engine.loadConfig()
 	engine.attemptConnection()

@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/unix-streamdeck/api"
 	streamdeck "github.com/unix-streamdeck/driver"
+	"image"
 )
 
 type VirtualDev struct {
@@ -18,4 +19,8 @@ type Module struct {
 	NewKey     func() api.KeyHandler
 	IconFields []api.Field
 	KeyFields  []api.Field
+}
+
+type Action interface {
+	SetImage(img image.Image, i int, page int)
 }

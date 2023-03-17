@@ -1,4 +1,4 @@
-package _interface
+package modules
 
 import (
 	"github.com/polpettone/streamdeckd/cmd/models"
@@ -57,33 +57,17 @@ func (g *GameHandler) Stop() {
 }
 
 type GameKeyHandler struct {
-	engine *Engine
+	Action models.Action
 }
 
-func (GameKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
+func (g GameKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	handler := key.IconHandlerStruct.(*GameHandler)
 
 	imgParsed, _ := api.DrawText(handler.CurrentImage, "foo", key.TextSize, key.TextAlignment)
 
-	SetImage(currentEngine,
-		currentEngine.devs["CL33L2A02177"],
-		imgParsed,
-		10,
-		5)
+	g.Action.SetImage(imgParsed, 10, 5)
 
 	if handler.Callback != nil {
 		handler.Start(key, info, handler.Callback)
-	}
-}
-
-func RegisterGame() models.Module {
-	return models.Module{
-		NewIcon: func() api.IconHandler {
-			return &GameHandler{Running: true}
-		},
-		NewKey: func() api.KeyHandler {
-			return &GameKeyHandler{}
-		},
-		Name: "Game",
 	}
 }

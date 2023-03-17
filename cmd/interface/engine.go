@@ -24,7 +24,6 @@ import (
 type Engine struct {
 	devs          map[string]*models.VirtualDev
 	config        *api.Config
-	migrateConfig bool
 	configPath    string
 	disconnectSem *semaphore.Weighted
 	connectSem    *semaphore.Weighted
@@ -41,9 +40,8 @@ func NewEngine() *Engine {
 		config:     nil,
 		configPath: "",
 
-		devs:          make(map[string]*models.VirtualDev),
-		migrateConfig: false,
-		isRunning:     true,
+		devs:      make(map[string]*models.VirtualDev),
+		isRunning: true,
 
 		disconnectSem: semaphore.NewWeighted(1),
 		connectSem:    semaphore.NewWeighted(2),
@@ -198,11 +196,7 @@ func (engine *Engine) openDevice() (*models.VirtualDev, error) {
 		return &models.VirtualDev{}, err
 	}
 	devNo := -1
-	if engine.migrateConfig {
-		engine.config.Decks[0].Serial = device.Serial
-		_ = engine.SaveConfig()
-		engine.migrateConfig = false
-	}
+
 	for i := range engine.config.Decks {
 		if engine.config.Decks[i].Serial == device.Serial {
 			devNo = i
@@ -267,15 +261,6 @@ func (engine *Engine) ReadConfig() (*api.Config, error) {
 	}
 	var config api.Config
 	err = json.Unmarshal(data, &config)
-	if err != nil || config.Decks == nil {
-		var deprecatedConfig api.DepracatedConfig
-		err = json.Unmarshal(data, &deprecatedConfig)
-		if err != nil {
-			return &api.Config{}, err
-		}
-		config = api.Config{Modules: deprecatedConfig.Modules, Decks: []api.Deck{{Pages: deprecatedConfig.Pages, Serial: ""}}}
-		engine.migrateConfig = true
-	}
 	return &config, nil
 }
 

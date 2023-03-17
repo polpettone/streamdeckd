@@ -29,10 +29,6 @@ type Engine struct {
 	isRunning     bool
 }
 
-func (engine *Engine) SetImage(img image.Image, i int, page int) {
-	SetImage(engine, engine.devs["CL33L2A02177"], img, i, page)
-}
-
 func NewEngine() *Engine {
 
 	return &Engine{
@@ -54,6 +50,10 @@ func NewEngine() *Engine {
 		},
 	}
 
+}
+
+func (engine *Engine) SetImage(img image.Image, i int, page int) {
+	SetImage(engine, engine.devs["CL33L2A02177"], img, i, page)
 }
 
 func (engine *Engine) Run() {
@@ -80,6 +80,7 @@ func (engine *Engine) Run() {
 	go InitDBUS()
 
 	RegisterBaseModules(engine)
+	InitGame()
 
 	engine.loadConfig()
 	engine.attemptConnection()

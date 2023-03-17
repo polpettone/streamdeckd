@@ -6,12 +6,31 @@ import (
 	"image"
 	"image/draw"
 	"log"
+	"strconv"
 )
 
 type GameHandler struct {
 	Running      bool
 	Callback     func(image image.Image)
 	CurrentImage image.Image
+}
+
+func NewGameHandler() *GameHandler {
+	return &GameHandler{
+		Running: true,
+	}
+}
+
+type GameState struct {
+	solution       int
+	pressedNumbers []int
+}
+
+func NewGameState(solution int) *GameState {
+	return &GameState{
+		pressedNumbers: []int{},
+		solution:       solution,
+	}
 }
 
 func (g *GameHandler) Start(
@@ -34,8 +53,13 @@ func (g *GameHandler) Start(
 		image.ZP,
 		draw.Src)
 
+	text, v := k.IconHandlerFields["number"]
+	if !v {
+		text = "the game"
+	}
+
 	imgParsed, err := api.DrawText(
-		g.CurrentImage, "The Game", k.TextSize, k.TextAlignment)
+		g.CurrentImage, text, k.TextSize, k.TextAlignment)
 
 	if err != nil {
 		log.Println(err)
@@ -57,15 +81,33 @@ func (g *GameHandler) Stop() {
 }
 
 type GameKeyHandler struct {
-	Action models.Action
+	Action    models.Action
+	GameState *GameState
 }
 
+func NewGameKeyHandler(action models.Action, state *GameState) *GameKeyHandler {
+	return &GameKeyHandler{
+		Action:    action,
+		GameState: state,
+	}
+}
 func (g GameKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	handler := key.IconHandlerStruct.(*GameHandler)
 
 	imgParsed, _ := api.DrawText(handler.CurrentImage, "foo", key.TextSize, key.TextAlignment)
 
-	g.Action.SetImage(imgParsed, 10, 5)
+	numberText := key.IconHandlerFields["number"]
+	number, err := strconv.Atoi(numberText)
+	if err == nil {
+		log.Printf("Game Number %d pressed", number)
+		g.GameState.pressedNumbers = append(g.GameState.pressedNumbers, number)
+		if number == g.GameState.solution {
+			g.Action.SetImage(imgParsed, 14, 5)
+		}
+		log.Printf("%v", g.GameState.pressedNumbers)
+	} else {
+		log.Println(err)
+	}
 
 	if handler.Callback != nil {
 		handler.Start(key, info, handler.Callback)

@@ -50,11 +50,17 @@ func RegisterCounter() models.Module {
 func RegisterGame(action models.Action) models.Module {
 	return models.Module{
 		NewIcon: func() api.IconHandler {
-			return &modules2.GameHandler{Running: true}
+			return modules2.NewGameHandler()
 		},
 		NewKey: func() api.KeyHandler {
-			return &modules2.GameKeyHandler{Action: action}
+			return modules2.NewGameKeyHandler(action, gameState)
 		},
 		Name: "Game",
 	}
+}
+
+var gameState *modules2.GameState
+
+func InitGame() {
+	gameState = modules2.NewGameState(3)
 }

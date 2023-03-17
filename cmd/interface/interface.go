@@ -17,21 +17,6 @@ import (
 
 var sem = semaphore.NewWeighted(int64(1))
 
-func LoadImage(dev *models.VirtualDev, path string) (image.Image, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	img, _, err := image.Decode(f)
-	if err != nil {
-		return nil, err
-	}
-
-	return api.ResizeImage(img, int(dev.Deck.Pixels)), nil
-}
-
 func SetImage(engine *Engine, dev *models.VirtualDev, img image.Image, i int, page int) {
 	ctx := context.Background()
 	err := sem.Acquire(ctx, 1)
@@ -61,7 +46,7 @@ func SetKeyImage(engine *Engine, dev *models.VirtualDev, currentKey *api.Key, i 
 			draw.Draw(img, img.Bounds(), image.Black, image.ZP, draw.Src)
 			currentKey.Buff = img
 		} else {
-			img, err := LoadImage(dev, currentKey.Icon)
+			img, err := loadImage(dev, currentKey.Icon)
 			if err != nil {
 				log.Println(err)
 				return
@@ -216,4 +201,19 @@ func Listen(dev *models.VirtualDev, engine *Engine) {
 			}
 		}
 	}
+}
+
+func loadImage(dev *models.VirtualDev, path string) (image.Image, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	img, _, err := image.Decode(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return api.ResizeImage(img, int(dev.Deck.Pixels)), nil
 }

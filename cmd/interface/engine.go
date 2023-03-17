@@ -29,8 +29,6 @@ type Engine struct {
 	isRunning     bool
 }
 
-var currentEngine *Engine
-
 func (engine *Engine) SetImage(img image.Image, i int, page int) {
 	SetImage(engine, engine.devs["CL33L2A02177"], img, i, page)
 }
@@ -59,8 +57,6 @@ func NewEngine() *Engine {
 }
 
 func (engine *Engine) Run() {
-
-	currentEngine = engine
 	checkOtherRunningInstances()
 
 	configPtr := flag.String("config", engine.configPath, "Path to config file")

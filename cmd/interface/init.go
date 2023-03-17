@@ -5,4 +5,5 @@ func RegisterBaseModules() {
 	RegisterModule(RegisterTime())
 	RegisterModule(RegisterCounter())
 	RegisterModule(RegisterIconState())
+	RegisterModule(RegisterGame())
 }

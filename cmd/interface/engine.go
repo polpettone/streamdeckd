@@ -32,6 +32,8 @@ type Engine struct {
 	isRunning     bool
 }
 
+var currentEngine *Engine
+
 func NewEngine() *Engine {
 
 	return &Engine{
@@ -58,6 +60,7 @@ func NewEngine() *Engine {
 
 func (engine *Engine) Run() {
 
+	currentEngine = engine
 	checkOtherRunningInstances()
 
 	configPtr := flag.String("config", engine.configPath, "Path to config file")

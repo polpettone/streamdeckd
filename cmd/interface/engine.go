@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -255,7 +254,7 @@ func (engine *Engine) loadConfig() {
 }
 
 func (engine *Engine) ReadConfig() (*api.Config, error) {
-	data, err := ioutil.ReadFile(engine.configPath)
+	data, err := os.ReadFile(engine.configPath)
 	if err != nil {
 		return &api.Config{}, err
 	}

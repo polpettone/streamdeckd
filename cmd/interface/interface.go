@@ -3,6 +3,7 @@ package _interface
 import (
 	"context"
 	"github.com/polpettone/streamdeckd/cmd/models"
+	"github.com/polpettone/streamdeckd/pkg"
 	"image"
 	"image/draw"
 	"log"
@@ -149,10 +150,10 @@ func SetKey(engine *Engine, dev *models.VirtualDev, currentKey *api.Key, i int, 
 
 func HandleInput(engine *Engine, dev *models.VirtualDev, key *api.Key, page int) {
 	if key.Command != "" {
-		RunCommand(key.Command)
+		pkg.RunCommand(key.Command)
 	}
 	if key.Keybind != "" {
-		RunCommand("xdotool key " + key.Keybind)
+		pkg.RunCommand("xdotool key " + key.Keybind)
 	}
 	if key.SwitchPage != 0 {
 		page = key.SwitchPage - 1
@@ -165,7 +166,7 @@ func HandleInput(engine *Engine, dev *models.VirtualDev, key *api.Key, page int)
 		}
 	}
 	if key.Url != "" {
-		RunCommand("xdg-open " + key.Url)
+		pkg.RunCommand("xdg-open " + key.Url)
 	}
 	if key.KeyHandler != "" {
 		var deckInfo api.StreamDeckInfo

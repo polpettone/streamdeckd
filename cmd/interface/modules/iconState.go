@@ -1,14 +1,12 @@
 package modules
 
 import (
-	"fmt"
 	"github.com/polpettone/streamdeckd/cmd/models"
+	"github.com/polpettone/streamdeckd/pkg"
 	"image"
 	"image/draw"
 	"log"
 	"os"
-	"os/exec"
-	"syscall"
 
 	"github.com/unix-streamdeck/api"
 )
@@ -55,10 +53,7 @@ func (c *IconStateHandler) Start(
 
 		imgParsed, err := api.DrawText(c.CurrentImage, text, k.TextSize, k.TextAlignment)
 
-		runCommand(command)
-
-		//devs := myConfig.MyDevs
-		//SetImage(devs["DL49K1A67580"], imgParsed, 7, 8)
+		pkg.RunCommand(command)
 
 		if err != nil {
 			log.Println(err)
@@ -149,23 +144,4 @@ func (c *IconStateHandler) LoadIcons(k api.Key) {
 	}
 
 	c.Icon2 = image2
-}
-
-func runCommand(command string) {
-	go func() {
-		cmd := exec.Command("/bin/sh", "-c", "/usr/bin/nohup "+command)
-
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setpgid:   true,
-			Pgid:      0,
-			Pdeathsig: syscall.SIGHUP,
-		}
-		if err := cmd.Start(); err != nil {
-			fmt.Println("There was a problem running ", command, ":", err)
-		} else {
-			pid := cmd.Process.Pid
-			cmd.Process.Release()
-			fmt.Println(command, " has been started with pid", pid)
-		}
-	}()
 }

@@ -28,9 +28,38 @@ func RegisterIconState() models.Module {
 }
 
 func RegisterGif() models.Module {
-	return models.Module{NewIcon: func() api.IconHandler {
-		return &modules2.GifIconHandler{Running: true, Lock: semaphore.NewWeighted(1)}
-	}, Name: "Gif", IconFields: []api.Field{{Title: "Icon", Name: "icon", Type: "File", FileTypes: []string{".gif"}}, {Title: "Text", Name: "text", Type: "Text"}, {Title: "Text Size", Name: "text_size", Type: "Number"}, {Title: "Text Alignment", Name: "text_alignment", Type: "TextAlignment"}}}
+	return models.Module{
+		NewIcon: func() api.IconHandler {
+			return &modules2.GifIconHandler{
+				Running: true,
+				Lock:    semaphore.NewWeighted(1),
+			}
+		},
+		Name: "Gif",
+		IconFields: []api.Field{
+			{
+				Title:     "Icon",
+				Name:      "icon",
+				Type:      "File",
+				FileTypes: []string{".gif"},
+			},
+			{
+				Title: "Text",
+				Name:  "text",
+				Type:  "Text",
+			},
+			{
+				Title: "Text Size",
+				Name:  "text_size",
+				Type:  "Number",
+			},
+			{
+				Title: "Text Alignment",
+				Name:  "text_alignment",
+				Type:  "TextAlignment",
+			},
+		},
+	}
 }
 
 func RegisterTime() models.Module {

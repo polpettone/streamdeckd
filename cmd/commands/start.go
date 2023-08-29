@@ -24,8 +24,8 @@ func handleStartCommand(cobraCommand *cobra.Command, args []string) error {
 		return err
 	}
 
-	_interface.StartEngine(configPath)
-	return nil
+	engine := _interface.NewEngine(configPath)
+	return engine.Run()
 }
 
 func init() {

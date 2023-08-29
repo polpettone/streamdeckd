@@ -55,8 +55,12 @@ func (engine *Engine) SetImage(img image.Image, i int, page int) {
 	SetImage(engine, engine.devs["CL33L2A02177"], img, i, page)
 }
 
-func (engine *Engine) Run() {
-	checkOtherRunningInstances()
+func (engine *Engine) Run() error {
+	err := checkOtherRunningInstances()
+
+	if err != nil {
+		return err
+	}
 
 	engine.cleanupHook()
 
@@ -67,21 +71,24 @@ func (engine *Engine) Run() {
 
 	engine.loadConfig()
 	engine.attemptConnection()
+
+	return err
 }
 
-func checkOtherRunningInstances() {
+func checkOtherRunningInstances() error {
 	processes, err := process.Processes()
 	if err != nil {
-		log.Println("Could not check for other instances of streamdeckd, assuming no others running: %s", err)
+		return err
 	}
 	for _, proc := range processes {
 		name, err := proc.Name()
 		if err == nil &&
 			name == "streamdeckd" &&
 			int(proc.Pid) != os.Getpid() {
-			log.Fatalln("Another instance of streamdeckd is already running, exiting...")
+			return errors.New("Another instance of streamdeckd is already running, exiting...")
 		}
 	}
+	return nil
 }
 
 func (engine *Engine) attemptConnection() {

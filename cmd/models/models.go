@@ -1,9 +1,10 @@
 package models
 
 import (
+	"image"
+
 	"github.com/unix-streamdeck/api"
 	streamdeck "github.com/unix-streamdeck/driver"
-	"image"
 )
 
 type VirtualDev struct {
@@ -23,4 +24,8 @@ type Module struct {
 
 type Action interface {
 	SetImage(img image.Image, i int, page int)
+}
+
+type PageRow struct {
+	Keys []api.Key `yaml:"line"`
 }

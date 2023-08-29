@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"flag"
 	"image"
 	"log"
 	"os"
@@ -29,12 +28,12 @@ type Engine struct {
 	isRunning     bool
 }
 
-func NewEngine() *Engine {
+func NewEngine(configPath string) *Engine {
 
 	return &Engine{
 
 		config:     nil,
-		configPath: "",
+		configPath: configPath,
 
 		devs:      make(map[string]*models.VirtualDev),
 		isRunning: true,
@@ -58,22 +57,6 @@ func (engine *Engine) SetImage(img image.Image, i int, page int) {
 
 func (engine *Engine) Run() {
 	checkOtherRunningInstances()
-
-	configPtr := flag.String("config", engine.configPath, "Path to config file")
-
-	flag.Parse()
-
-	if *configPtr != "" {
-		engine.configPath = *configPtr
-	} else {
-
-		basePath := os.Getenv("HOME") + string(os.PathSeparator) + ".config"
-		if os.Getenv("XDG_CONFIG_HOME") != "" {
-			basePath = os.Getenv("XDG_CONFIG_HOME")
-		}
-
-		engine.configPath = basePath + string(os.PathSeparator) + ".streamdeck-config.json"
-	}
 
 	engine.cleanupHook()
 

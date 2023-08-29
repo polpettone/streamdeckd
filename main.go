@@ -1,12 +1,7 @@
 package main
 
-import (
-	_interface "github.com/polpettone/streamdeckd/cmd/interface"
-)
-
-var engine *_interface.Engine
+import cmd "github.com/polpettone/streamdeckd/cmd/commands"
 
 func main() {
-	engine = _interface.NewEngine()
-	engine.Run()
+	cmd.Execute()
 }

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -11,6 +13,8 @@ import (
 	"github.com/unix-streamdeck/api"
 	"gopkg.in/yaml.v2"
 )
+
+const PAGE_NAME_PATTERN = "page-"
 
 func UnmarshalRow(raw string) (*models.PageRow, error) {
 	var rows models.PageRow
@@ -26,12 +30,51 @@ func SetupConfigurationFromDir(dirPath string) (*api.Deck, error) {
 	return deck, nil
 }
 
-type ConfigPage struct {
-	number int
-	path   string
+func ReadPages(dirPath string, pages []int) ([]PageRawContent, error) {
+	pageRawContents := []PageRawContent{}
+
+	sort.Slice(pages, func(i, j int) bool {
+		return pages[i] < pages[j]
+	})
+
+	for _, page := range pages {
+		pageDirName := fmt.Sprintf("%s/%s%d", dirPath, PAGE_NAME_PATTERN, page)
+		entries, err := os.ReadDir(pageDirName)
+		if err != nil {
+			return nil, err
+		}
+
+		sort.Slice(entries, func(i, j int) bool {
+			if strings.Compare(entries[i].Name(), entries[j].Name()) > 0 {
+				return false
+			}
+			return true
+		})
+
+		for i, entry := range entries {
+			if !entry.IsDir() {
+				content, err := os.ReadFile(filepath.Join(pageDirName, entry.Name()))
+				pageRawContents = append(
+					pageRawContents,
+					PageRawContent{
+						PageNumber: page,
+						RowNumber:  i,
+						Content:    string(content)})
+
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	return pageRawContents, nil
 }
 
-const PAGE_NAME_PATTERN = "page-"
+type PageRawContent struct {
+	RowNumber  int
+	Content    string
+	PageNumber int
+}
 
 func DetectPages(dir string) ([]int, error) {
 	entries, err := os.ReadDir(dir)

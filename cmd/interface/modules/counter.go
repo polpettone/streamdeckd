@@ -1,12 +1,12 @@
-package examples
+package modules
 
 import (
-	"github.com/unix-streamdeck/api"
-	"github.com/unix-streamdeck/streamdeckd/handlers"
 	"image"
 	"image/draw"
 	"log"
 	"strconv"
+
+	"github.com/unix-streamdeck/api"
 )
 
 type CounterIconHandler struct {
@@ -36,11 +36,11 @@ func (c *CounterIconHandler) IsRunning() bool {
 	return c.Running
 }
 
-func (c *CounterIconHandler) SetRunning(running bool)  {
+func (c *CounterIconHandler) SetRunning(running bool) {
 	c.Running = running
 }
 
-func (c CounterIconHandler) Stop()  {
+func (c CounterIconHandler) Stop() {
 	c.Running = false
 }
 
@@ -55,12 +55,4 @@ func (CounterKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	if handler.Callback != nil {
 		handler.Start(key, info, handler.Callback)
 	}
-}
-
-func RegisterCounter() handlers.Module {
-	return handlers.Module{NewIcon: func() api.IconHandler {
-		return &CounterIconHandler{Running: true, Count: 0}
-	}, NewKey: func() api.KeyHandler {
-		return &CounterKeyHandler{}
-	}, Name: "Counter"}
 }

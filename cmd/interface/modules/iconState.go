@@ -1,20 +1,16 @@
-package examples
+package modules
 
 import (
-	"fmt"
+	"github.com/polpettone/streamdeckd/pkg"
 	"image"
 	"image/draw"
 	"log"
 	"os"
-	"os/exec"
-	"syscall"
 
 	"github.com/unix-streamdeck/api"
-	"github.com/unix-streamdeck/streamdeckd/handlers"
 )
 
 type IconStateHandler struct {
-	Count        int
 	Running      bool
 	Callback     func(image image.Image)
 	State        bool
@@ -56,7 +52,7 @@ func (c *IconStateHandler) Start(
 
 		imgParsed, err := api.DrawText(c.CurrentImage, text, k.TextSize, k.TextAlignment)
 
-		runCommand(command)
+		pkg.RunCommand(command)
 
 		if err != nil {
 			log.Println(err)
@@ -83,7 +79,6 @@ type IconStateKeyHandler struct{}
 func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 
 	handler := key.IconHandlerStruct.(*IconStateHandler)
-	handler.Count += 1
 
 	if handler.State {
 		handler.State = false
@@ -94,14 +89,6 @@ func (IconStateKeyHandler) Key(key api.Key, info api.StreamDeckInfo) {
 	if handler.Callback != nil {
 		handler.Start(key, info, handler.Callback)
 	}
-}
-
-func RegisterIconState() handlers.Module {
-	return handlers.Module{NewIcon: func() api.IconHandler {
-		return &IconStateHandler{Running: true, Count: 0}
-	}, NewKey: func() api.KeyHandler {
-		return &IconStateKeyHandler{}
-	}, Name: "IconState"}
 }
 
 // Both Icon Images must be loaded successfully
@@ -146,23 +133,4 @@ func (c *IconStateHandler) LoadIcons(k api.Key) {
 	}
 
 	c.Icon2 = image2
-}
-
-func runCommand(command string) {
-	go func() {
-		cmd := exec.Command("/bin/sh", "-c", "/usr/bin/nohup "+command)
-
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setpgid:   true,
-			Pgid:      0,
-			Pdeathsig: syscall.SIGHUP,
-		}
-		if err := cmd.Start(); err != nil {
-			fmt.Println("There was a problem running ", command, ":", err)
-		} else {
-			pid := cmd.Process.Pid
-			cmd.Process.Release()
-			fmt.Println(command, " has been started with pid", pid)
-		}
-	}()
 }

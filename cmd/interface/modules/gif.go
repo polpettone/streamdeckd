@@ -1,16 +1,16 @@
-package examples
+package modules
 
 import (
 	"context"
-	"github.com/unix-streamdeck/api"
-	"github.com/unix-streamdeck/streamdeckd/handlers"
-	"golang.org/x/sync/semaphore"
 	"image"
 	"image/gif"
 	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/unix-streamdeck/api"
+	"golang.org/x/sync/semaphore"
 )
 
 type GifIconHandler struct {
@@ -92,10 +92,4 @@ func (s *GifIconHandler) loop(frames []image.Image, timeDelay int, callback func
 			time.Sleep(time.Duration(timeDelay * 10000000))
 		}
 	}
-}
-
-func RegisterGif() handlers.Module {
-	return handlers.Module{NewIcon: func() api.IconHandler {
-		return &GifIconHandler{Running: true, Lock: semaphore.NewWeighted(1)}
-	}, Name: "Gif", IconFields: []api.Field{{Title: "Icon", Name: "icon", Type: "File", FileTypes: []string{".gif"}}, {Title: "Text", Name: "text", Type: "Text"}, {Title: "Text Size", Name: "text_size", Type: "Number"}, {Title: "Text Alignment", Name: "text_alignment", Type: "TextAlignment"}}}
 }

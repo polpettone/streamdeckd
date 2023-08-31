@@ -2,13 +2,14 @@ package _interface
 
 import (
 	"context"
-	"github.com/polpettone/streamdeckd/cmd/models"
-	"github.com/polpettone/streamdeckd/pkg"
 	"image"
 	"image/draw"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/polpettone/streamdeckd/cmd/models"
+	"github.com/polpettone/streamdeckd/pkg"
 
 	"github.com/unix-streamdeck/api"
 	_ "github.com/unix-streamdeck/driver"
@@ -68,6 +69,9 @@ func SetKeyImage(engine *Engine, dev *models.VirtualDev, currentKey *api.Key, i 
 }
 
 func SetPage(engine *Engine, dev *models.VirtualDev, page int) {
+
+	log.Printf("set page: %d", page)
+
 	if len(dev.Config) <= page {
 		log.Printf("Requested page %d does not exists \n", page)
 		return

@@ -24,8 +24,15 @@ func handleStartCommand(cobraCommand *cobra.Command, args []string) error {
 		return err
 	}
 
+	deprecatedConfig, err := cobraCommand.Flags().GetBool("deprecated")
+	if err != nil {
+		return err
+	}
+	log.Printf("Using deprecatedConfig: %t", deprecatedConfig)
+
 	engine := _interface.NewEngine(configPath)
-	return engine.Run()
+
+	return engine.Run(!deprecatedConfig)
 }
 
 func init() {
@@ -37,6 +44,12 @@ func init() {
 		"c",
 		"",
 		"path to config file")
+
+	startCmd.Flags().BoolP(
+		"deprecated",
+		"d",
+		false,
+		"use deprecated config")
 
 	err := startCmd.MarkFlagRequired("config")
 

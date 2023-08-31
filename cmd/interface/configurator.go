@@ -3,6 +3,7 @@ package _interface
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -25,12 +26,52 @@ func UnmarshalRow(raw string) (*models.PageRow, error) {
 	return &rows, nil
 }
 
-func SetupConfigurationFromDir(dirPath string) (*api.Deck, error) {
-	deck := &api.Deck{}
-	return deck, nil
+func SetupConfigurationFromDir(dirPath string) (*api.Config, error) {
+	config := &api.Config{}
+
+	pages, err := DetectPages(dirPath)
+	if err != nil {
+		return nil, err
+	}
+
+	rawContents, err := ReadPages(dirPath, pages)
+	if err != nil {
+		return nil, err
+	}
+
+	max := pages[0]
+	for _, v := range pages {
+		if v > max {
+			max = v
+		}
+	}
+
+	configPages := []api.Page{}
+	for n := 0; n <= max; n++ {
+		configPages = append(configPages, api.Page{})
+	}
+
+	for _, raw := range rawContents {
+		index := raw.PageNumber
+		pageRaw, err := UnmarshalRow(raw.Content)
+		if err != nil {
+			return nil, err
+		}
+		configPages[index] = append(configPages[index], pageRaw.Keys...)
+	}
+
+	deck := api.Deck{
+		Serial: "CL33L2A02177",
+		Pages:  configPages,
+	}
+
+	config.Decks = []api.Deck{deck}
+
+	return config, nil
 }
 
 func ReadPages(dirPath string, pages []int) ([]PageRawContent, error) {
+	log.Printf("Read Pages: %s", dirPath)
 	pageRawContents := []PageRawContent{}
 
 	sort.Slice(pages, func(i, j int) bool {
@@ -77,6 +118,7 @@ type PageRawContent struct {
 }
 
 func DetectPages(dir string) ([]int, error) {
+	log.Printf("Detect pages: %s", dir)
 	entries, err := os.ReadDir(dir)
 
 	if err != nil {

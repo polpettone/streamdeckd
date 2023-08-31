@@ -55,7 +55,8 @@ func (engine *Engine) SetImage(img image.Image, i int, page int) {
 	SetImage(engine, engine.devs["CL33L2A02177"], img, i, page)
 }
 
-func (engine *Engine) Run() error {
+// TODO: Flag einbauen, alte Config , neue config
+func (engine *Engine) Run(newConfig bool) error {
 	err := checkOtherRunningInstances()
 
 	if err != nil {
@@ -69,7 +70,15 @@ func (engine *Engine) Run() error {
 	RegisterBaseModules(engine)
 	InitGame()
 
-	engine.loadConfig()
+	if newConfig {
+		err = engine.loadConfigNew()
+		if err != nil {
+			return err
+		}
+	} else {
+		engine.loadConfig()
+	}
+
 	engine.attemptConnection()
 
 	return err
@@ -92,6 +101,8 @@ func checkOtherRunningInstances() error {
 }
 
 func (engine *Engine) attemptConnection() {
+
+	log.Println("attemptConnection")
 
 	for engine.isRunning {
 
@@ -243,6 +254,23 @@ func (engine *Engine) loadConfig() {
 	}
 }
 
+func (engine *Engine) loadConfigNew() error {
+
+	var err error
+	engine.config, err = engine.ReadConfigNew()
+
+	if err != nil {
+		return err
+	}
+
+	if len(engine.config.Modules) > 0 {
+		for _, module := range engine.config.Modules {
+			LoadModule(module)
+		}
+	}
+	return err
+}
+
 func (engine *Engine) ReadConfig() (*api.Config, error) {
 	data, err := os.ReadFile(engine.configPath)
 	if err != nil {
@@ -251,6 +279,16 @@ func (engine *Engine) ReadConfig() (*api.Config, error) {
 	var config api.Config
 	err = json.Unmarshal(data, &config)
 	return &config, nil
+}
+
+func (engine *Engine) ReadConfigNew() (*api.Config, error) {
+	config, err := SetupConfigurationFromDir(engine.configPath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }
 
 func (engine *Engine) cleanupHook() {
@@ -296,6 +334,7 @@ func (engine *Engine) cleanupHook() {
 }
 
 func (engine *Engine) SetConfig(configString string) error {
+	log.Printf("Set Config: %s \n", configString)
 	engine.unmountHandlers()
 	var err error
 	engine.config = nil
@@ -315,8 +354,14 @@ func (engine *Engine) SetConfig(configString string) error {
 }
 
 func (engine *Engine) ReloadConfig() error {
+	log.Printf("Reload Config \n")
 	engine.unmountHandlers()
-	engine.loadConfig()
+
+	err := engine.loadConfigNew()
+	if err != nil {
+		return err
+	}
+
 	for _, dev := range engine.devs {
 		for i := range engine.config.Decks {
 			if dev.Deck.Serial == engine.config.Decks[i].Serial {

@@ -67,6 +67,7 @@ func TestDetectPages(t *testing.T) {
 	ioutil.WriteFile(filepath.Join(dir, "navi.yaml"), []byte("test"), 0644)
 
 	pages, err := DetectPages(dir)
+
 	if err != nil {
 		t.Errorf("ReadDir() returned an error: %v", err)
 	}
@@ -79,11 +80,11 @@ func TestDetectPages(t *testing.T) {
 }
 
 func TestReadPages(t *testing.T) {
+
 	dir, err := ioutil.TempDir("", "config")
 	if err != nil {
 		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
-
 	defer os.RemoveAll(dir)
 
 	os.Mkdir(filepath.Join(dir, "page-1"), 0755)
@@ -99,5 +100,31 @@ func TestReadPages(t *testing.T) {
 	if len(contents) != 3 {
 		t.Errorf("wanted %d got %d", 3, len(contents))
 	}
+
+}
+
+func TestSetupConfigurationFromDir(t *testing.T) {
+
+	dir, err := ioutil.TempDir("", "config")
+	if err != nil {
+		t.Fatalf("Failed to create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(dir)
+
+	os.Mkdir(filepath.Join(dir, "page-1"), 0755)
+	os.Mkdir(filepath.Join(dir, "page-2"), 0755)
+
+	ioutil.WriteFile(filepath.Join(dir, "page-1", "row0.yaml"), []byte(row0), 0644)
+	ioutil.WriteFile(filepath.Join(dir, "page-1", "row1.yaml"), []byte(row1), 0644)
+
+	ioutil.WriteFile(filepath.Join(dir, "page-2", "row0.yaml"), []byte(row0), 0644)
+
+	config, err := SetupConfigurationFromDir(dir)
+
+	if err != nil {
+		t.Errorf("no error wanted, got: %v", err)
+	}
+
+	fmt.Printf("%v", config)
 
 }
